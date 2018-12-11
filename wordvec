@@ -1,0 +1,70 @@
+import jieba
+import math
+import re
+from string import punctuation
+from heapq import nlargest
+from itertools import product, count
+from gensim.models import word2vec
+import numpy as np
+from scipy.spatial.distance import cosine
+from sklearn.metrics.pairwise import cosine_similarity
+from  processCorpus import processCorpus
+
+
+class wordvec(object):
+
+    def __init__(self):
+        self.processCorpus = processCorpus()
+
+    def loadModel(self,path):
+        model = word2vec.Word2Vec.load(path)
+        return model
+
+    def covertVector(self,path_model,path_cor):
+        model = self.loadModel(path_model)
+        corpus,sentence_dict = self.processCorpus.returnCorpus(path_cor)
+        words_vector = np.empty(len(corpus), dtype=list)
+        for index,words in enumerate(corpus):
+            tempVec = [0]*100
+            for word in words:
+                if word in model:
+                    tempVec += model[word]
+            words_vector[index] = tempVec
+        return words_vector,sentence_dict
+
+    def diffent(self,scores, old_score):
+        flag = False
+        for i in range(len(scores)):
+            if abs(scores[i] - old_score[i]) >= 1:
+                flag = True
+                break
+        return flag
+
+    def produce_Rank(self,path_model,path_cor):
+        word_vec,sentence_dict = self.covertVector(path_model,path_cor)
+        word_vec = word_vec.tolist()
+        mat = cosine_similarity(word_vec)
+        mat = mat/len(word_vec)
+        print_flag = 0
+        p0 = [1/len(word_vec)]*len(word_vec)
+        flag = True
+        pp = [0.15] * len(word_vec)
+        duijiao = np.eye(len(word_vec), dtype=int)
+        while flag:
+            print_flag+=1
+            p1 = np.dot(pp, duijiao) + 0.85 * np.dot(mat, p0)
+            if print_flag<10:
+                 print(p1)
+            flag = self.diffent(p1,p0)
+            p0 = p1
+        p_dict = [{"index":index,"score":score}for index,score in enumerate(p0)]
+        p_dict = sorted(p_dict, key=lambda x: -x['score'])
+        topN = p_dict[:3]
+        sentence = []
+        for index in topN:
+            sentence.append(sentence_dict[index['index']])
+        return p_dict[:3],sentence
+
+
+
+

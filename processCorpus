@@ -1,0 +1,60 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import jieba
+import math
+import re
+from string import punctuation
+from heapq import nlargest
+from itertools import product, count
+from gensim.models import word2vec
+import numpy as np
+from scipy.spatial.distance import cosine
+from sklearn.metrics.pairwise import cosine_similarity
+'''
+pagerank：WSn = （1-d）+d*(AT*Wsn-1)  在有的地方是：WS(n) = （1-d）WS(0)+d*(AT*Ws(n-1))  另外还有修正公式：WS(n) = （1-d）/N+https://www.jianshu.com/p/f6d66ab97332
+d:阻尼系数,一般取0.85
+'''
+class processCorpus:
+
+    def __init__(self):
+        pass
+
+    '''默认一篇文章就是一个文档'''
+    def getPage(self,path):
+        dataset = open(path,encoding="utf-8")
+        str = ''
+        for line in dataset:
+            str +=line
+        return str
+
+    ''' 返回一个已经分好句子的列表 '''
+    def split_sentence(self,page):
+        return re.split('。|！|\!|\.|？|\?|，|\,',page)
+
+    ''' 去除无关的符号，返回给结巴分词用 '''
+    def removePunctations(self, text):
+        return ''.join(t.replace(",","").replace("。","")\
+                  .replace("“","").replace("’","").replace("‘","").replace("“","").replace("”","")\
+                  .replace("、","").replace("...","").replace("-","").replace("~","").replace("？","")\
+                   .replace("！","").replace(":","").replace("《","").replace("》","").replace("（","")\
+                   .replace("）","").replace("*","").replace("\n","").replace("，","").replace(" ：","") for t in text)
+
+    ''' 进行结巴分词，进行model判别用 '''
+    def cut_word(self,text):
+        return [re.sub(r'\W*\d*', '', s) for s in jieba.cut(text) if re.sub(r'\W*\d*', '', s) != '']
+    ''' 用来返回语料，即已经分好的词 '''
+    def returnCorpus(self,path):
+        page = self.getPage(path)
+        sentences = self.split_sentence(page)
+        sentence_dict = {index:sentence for index,sentence in enumerate(sentences)}
+        corpus = []
+        for sentence in sentences:
+            text = self.removePunctations(sentence)
+            words = self.cut_word(text)
+            corpus.append(words)
+        return corpus,sentence_dict
+
+
+
+
+

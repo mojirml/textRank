@@ -1,0 +1,26 @@
+import jieba
+import math
+import re
+from string import punctuation
+from heapq import nlargest
+from itertools import product, count
+from gensim.models import word2vec
+import numpy as np
+from scipy.spatial.distance import cosine
+from sklearn.metrics.pairwise import cosine_similarity
+from  processCorpus import processCorpus
+from wordvec import wordvec
+class textRank:
+    def __init__(self):
+        self.wordvec = wordvec()
+    def topN(self,model_path,corpue_path):
+        score,sentence = self.wordvec.produce_Rank(model_path,corpue_path)
+        return sentence
+
+if __name__ == '__main__':
+    textRank = textRank()
+    model_path = "../text_wiki.model"
+    corpue_path = "./23.txt"
+    print("本文提取的摘要：")
+    for sen in textRank.topN(model_path,corpue_path):
+       print(sen)
